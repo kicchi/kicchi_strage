@@ -9,11 +9,11 @@
 	研究
 	その他
 
-* 競技プログラミング
-	aoj
-	Atcoder
-	HCPC
+* 競技プログラミング  
+	aoj  
+	Atcoder  
+	HCPC  
 
-* 研究
-	卒論
+* 研究  
+	卒論  
 
