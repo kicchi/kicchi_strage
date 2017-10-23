@@ -78,23 +78,21 @@ print ('output probability')
 print (prob)
 
 
-'''
 plt.plot(X1[:,0],X1[:,1],'o')
 plt.plot(X2[:,0],X2[:,1],'^')
 plt.plot(X3[:,0],X3[:,1],'x')
-x = X[0]
-w = sess.run(W)
-b = sess.run(b)
-print ("---x----")
-print (x)
-print ("---w----")
-print (w)
-print ("---b----")
-print (b)
-y = w.T * x
-print ("---y----")
-print (y)
 
-#plt.plot(x,y) 
+w = sess.run(W).T
+b = sess.run(b)
+print (w)
+x_1 = np.arange(-5,15,1)
+#class 1 and 2
+x_2 = (w[1][0] - w[0][0]) * x_1 + (b[1] - b[0]) / (w[0][1] - w[1][1])
+plt.plot(x_1,x_2)
+#class 2 and 3
+x_2 = (w[2][0] - w[1][0]) * x_1 + (b[2] - b[1]) / (w[1][1] - w[2][1])
+plt.plot(x_1,x_2)
+#class 3 and 1
+x_2 = (w[0][0] - w[2][0]) * x_1 + (b[0] - b[2]) / (w[2][1] - w[0][1])
+plt.plot(x_1,x_2)
 plt.savefig("split.png")
-'''

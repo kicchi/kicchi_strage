@@ -44,6 +44,7 @@ prob = y.eval(session=sess, feed_dict={
 	x: X,
 })
 
+
 print ('classified')
 print (classified)
 print ()
