@@ -10,18 +10,7 @@ from sklearn.model_selection import train_test_split
 
 N = 300
 X, y = datasets.make_moons(N, noise = 0.3)
-
-'''
-print (X[1].shape)
-data01 = np.empty((150,2))
-data02 = np.empty((150,2))
-for i in range(300):
-	if y[i] == 0:
-		data01 = np.concatenate((data01,X[i]), axis = 0)
-	elif y[i] == 1:
-		data02 = np.concatenate((data02,X[i]), axis = 0)
-'''
-
+data = y
 
 Y = y.reshape(N, 1)
 X_train, X_test, Y_train, Y_test =\
@@ -74,13 +63,12 @@ accuracy_rate = accuracy.eval(session = sess, feed_dict = {
 
 print ('accuracy: ', float(accuracy_rate))
 
-print ("------data01-------")
-print (data01)
+X_1 = X[:,0]
+X_2 = X[:,1]
+for i in range(300):
+	if data[i] == 0:
+		plt.plot(X_1[i],X_2[i],'o')
+	elif data[i] == 1:
+		plt.plot(X_1[i],X_2[i],'x')
 
-X_1 = data01[:,0]
-X_2 = data01[:,1]
-plt.plot(X_1,X_2,'o')
-X_1 = data02[:,0]
-X_2 = data02[:,1]
-plt.plot(X_1,X_2,'x')
 plt.savefig("toy_problem.png")
