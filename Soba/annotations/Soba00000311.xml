@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='utf-8'?>
+<annotation>
+	<folder>Soba</folder>
+	<filename>Soba00000311.jpg</filename>
+	<path>C:\Users\aihl01\Desktop\Soba\00000400.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>683</width>
+		<height>1024</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>Soba</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>169</xmin>
+			<ymin>652</ymin>
+			<xmax>576</xmax>
+			<ymax>876</ymax>
+		</bndbox>
+	</object>
+</annotation>
