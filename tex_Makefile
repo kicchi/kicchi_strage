@@ -1,0 +1,17 @@
+file_name = main
+
+.PHONY: all
+all:	
+	ptex2pdf -l $(file_name).tex
+	open $(file_name).pdf
+
+pdf: $(file_name).dvi
+	dvipdfmx $(file_name).dvi
+
+.PHONY: clean
+clean:
+	rm -f $(file_name).[^t]* $(file_name).toc
+
+.PHONY: cln
+cln: clean
+

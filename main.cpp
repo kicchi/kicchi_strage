@@ -5,12 +5,7 @@
 
 using namespace std;
 
-
-vector<int>  dx = {1,-1,0,0};
-vector<int>  dy = {0,0,1,-1};
-
-
-int main() {
+int main(int argc, char *argv[]) {
 
 	return 0;
 }

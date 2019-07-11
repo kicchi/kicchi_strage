@@ -1,4 +1,3 @@
-
 .PHONY: main.cpp
 all : a.out 
 	./a.out
