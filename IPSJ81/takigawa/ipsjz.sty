@@ -1,0 +1,180 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ipsjz.sty
+% 情報処理学会 全国大会用スタイルファイル 
+%
+%    by Susumu ISHIHARA (ishihara@cs.inf.shizuoka.ac.jp)
+%       Jan 2000
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \title{日本語タイトル} 
+% \etitle{英語タイトル}
+% \author{著者名}
+% \eauthor{英語著者名}
+% \affiliation{日本語所属}
+% \eaffiliation{英語所属}
+%
+% \maketitle  タイトル作成
+% \makeetitle 英タイトル作成
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% 使い方の例
+%
+%  \documentstyle[epsbox,11pt,twocolumn,ipsjz]{jarticle}
+%
+%  \title{日本語のタイトル}
+%  \author{石原 進, 水野 忠則}
+%  \affiliation{静岡大学情報学部}
+%
+%  \etitle{English Title}
+%  \eauthor{Susumu ISHIHARA, Tadanori Mizuno}
+%  \eaffiliation{Faculty of Informaiton, Shizuoka University}
+%
+%  \begin{document}
+%  \maketitle
+%  \makeetitle
+%  \section{***}
+%  ...
+%  \end{document}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Margin setup
+%
+% 上 30 mm, 下 25mm, 左右 20 mm for safe +1 pt
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newlength{\myleftmargin}
+\newlength{\mytopmargin}
+\newlength{\mybottommargin}
+\newlength{\afourheight}
+\newlength{\afourwidth}
+\setlength{\myleftmargin}{20mm}\addtolength{\myleftmargin}{1pt}
+\setlength{\mytopmargin}{30mm}\addtolength{\mytopmargin}{1pt}
+\setlength{\mybottommargin}{25mm}\addtolength{\mybottommargin}{1pt}
+\setlength{\afourheight}{296mm}
+\setlength{\afourwidth}{210mm}
+\setlength{\topmargin}{-1in}
+\setlength{\headheight}{0in}
+\setlength{\headsep}{0in}
+\addtolength{\topmargin}{\mytopmargin}
+\setlength{\oddsidemargin}{-1in}
+\addtolength{\oddsidemargin}{\myleftmargin}
+\setlength{\textheight}{\afourheight}
+\setlength{\textwidth}{\afourwidth}
+\addtolength{\textheight}{-\mytopmargin}
+\addtolength{\textheight}{-\mybottommargin}
+\addtolength{\textwidth}{-2\myleftmargin}
+\setlength{\columnsep}{2em}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Title 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\etitle#1{\def\@etitle{#1}}
+\def\eauthor#1{\def\@eauthor{#1}}
+\def\affiliation#1{\def\@affiliation{#1}}
+\def\eaffiliation#1{\def\@eaffiliation{#1}}
+\def\email#1{\def\@email{#1}}
+\def\entryno#1{\def\@entryno{#1}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\makeetitle{\def\@thefnmark{\relax}\@footnotetext{\hspace{-\labelwidth}%
+\textbf{\@etitle}\\ \@eauthor\\ \@eaffiliation\\ \@email}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\renewcommand{\maketitle}{\par
+ \begingroup
+  \renewcommand{\thefootnote}{\fnsymbol{footnote}}%
+  \def\@makefnmark{\hbox{\ifydir $\m@th^{\@thefnmark}$
+    \else\hbox{\yoko$\m@th^{\@thefnmark}$}\fi}}%
+   \long\def\@makefntext##1{\parindent 1em\noindent
+     \hbox to1.8em{\hss$\m@th^{\@thefnmark}$}##1}%
+  \if@twocolumn
+    \ifnum \col@number=\@ne \@maketitle
+    \else \twocolumn[\@maketitle]%
+    \fi
+  \else
+    \newpage
+    \global\@topnum\z@   % Prevents figures from going at top of page.
+    \@maketitle
+  \fi
+%  \thispagestyle{jpl@in}\@thanks
+\endgroup
+\setcounter{footnote}{0}%
+\global\let\thanks\relax
+\global\let\maketitle\relax
+\global\let\p@thanks\relax
+\global\let\@thanks\@empty
+\global\let\@author\@empty
+\global\let\@date\@empty
+\global\let\@title\@empty
+\global\let\title\relax
+\global\let\author\relax
+\global\let\date\relax
+\global\let\and\relax
+}
+\def\@maketitle{%
+\newpage\null
+%\vskip 2em%
+\begin{center}%
+\let\footnote\thanks
+  {\LARGE%
+  %\fbox{\@entryno}\quad%
+  \@title \par}%
+  \vskip 1.5em%
+  {\large
+    \lineskip .5em%
+    \begin{tabular}[t]{c}%
+      \@author
+    \end{tabular}\par}%
+  \vskip .5em%
+  {\large \@affiliation}%
+\end{center}%
+\par\vskip 1.5em}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Change Sectiontitle 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\renewcommand{\section}{\@startsection{section}{1}{\z@}%
+   {1.0\Cvs \@plus.1\Cdp \@minus.1\Cdp}%
+   {.1\Cvs \@plus.1\Cdp}%
+   {\reset@font\large\bfseries}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{\z@}%
+   {0.5\Cvs \@plus.05\Cdp \@minus.05\Cdp}%
+   {0.01\Cvs \@plus.01\Cdp}%
+   {\reset@font\normalsize\bfseries}}
+\renewcommand{\subsubsection}{\@startsection{subsubsection}{3}{\z@}%
+   {0.5\Cvs \@plus.1\Cdp \@minus.1\Cdp}%
+   {0.01\Cvs \@plus.01\Cdp}%
+   {\reset@font\normalsize\bfseries}}
+\renewcommand{\paragraph}{\@startsection{paragraph}{4}{\z@}%
+   {1.5ex \@plus .2ex \@minus .2ex}%
+   {-1em}%
+   {\reset@font\normalsize\bfseries}}
+\renewcommand{\subparagraph}{\@startsection{subparagraph}{5}{\z@}%
+   {1.5ex \@plus .2ex \@minus .2ex}%
+   {-1em}%
+   {\reset@font\normalsize\bfseries}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Macros
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\def\DAG{$^\dagger$}
+\def\DDAG{$^{\ddagger}$}
+\def\Hline{\noalign{\hrule height 0.4mm}} %%% thick \hline
+\def\slashbr{%
+ \bgroup\catcode '57=\active\@slashbr}
+{\catcode '57=\active
+ \gdef\@slashbr#1{%
+  \def/{\linebreak[0]\char'57
+	\linebreak[0]}#1\egroup}}
+
+%%%% Initialization 
+\title{}
+\etitle{}
+\author{}
+\date{}
+\eauthor{}
+\affiliation{}
+\eaffiliation{}
+\email{}
+%\entryno{??-??}
+\pagestyle{empty}
+%%% End of LaTeX style file
+   

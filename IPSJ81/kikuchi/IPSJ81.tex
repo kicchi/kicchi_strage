@@ -1,0 +1,256 @@
+\documentclass[twocolumn]{jarticle}
+
+\usepackage{ipsjz}
+\usepackage{setspace}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{amssymb,amsmath}
+\usepackage{bm}
+\usepackage{cite}
+
+\usepackage[font=small,labelfont=bf]{caption}
+\def\baselinestretch{0.96}
+
+\title{\vspace{-4pt}\Large\gt 入力表現の適応的選択を伴うグラフ畳み込みネットワーク学習} 
+\etitle{Learning Graph Convolution Networks with Adaptive Selection of Input Representations}   
+\author{菊地　翔馬\DAG \quad 瀧川　一学\DAG\DDAG\DDDAG\DDDDAG}
+\eauthor{Shoma KIKUCHI\DAG, Ichigaku TAKIGAWA\DAG\DDAG\DDDAG\DDDDAG} 
+
+\def\DDDAG{$^{\S}$}
+\def\DDDDAG{$^{\P}$}
+
+\affiliation{\normalsize \DAG 北海道大学大学院情報科学研究科 \quad \DDAG 北海道大学化学反応創成研究拠点\quad \DDDAG 理研AIP \quad \DDDDAG JSTさきがけ}
+\eaffiliation{\DAG Graduate School of IST, Hokkaido University\\
+\DDAG WPI-ICReDD, Hokkaido University\\
+\DDDAG RIKEN AIP \quad \DDDDAG JST PRESTO}
+\email{\{kicchi-s, takigawa\}@ist.hokudai.ac.jp}
+
+\begin{document}
+
+\maketitle
+\makeetitle   
+\baselineskip=1.53zh 
+
+\vspace{-5pt}
+
+\fontsize{9pt}{12pt}\selectfont
+
+\section{はじめに}
+グラフは，化合物データ，分子間相互作用ネットワーク，XML文節データなど様々な知識処理に応用されるデータ構造である．各々の対象がこのようなグラフで表現されたデータに対する回帰・分類問題は，グラフ$G$とそれに対応する関連値・クラス$y$がラベル付けされたデータを用いた教師付き学習であり，特に近年，生命科学や物質科学において化合物の物性・活性をデータ駆動方式で予測する手法として注目されている．
+
+教師付き学習は通常は固定次元の多変量ベクトルに対して定義されるため，グラフに対する拡張は自明ではない．近年では，この表現学習の手法として，グラフ構造に対するニューラルネットワーク (Graph Neural Network, GNN)が盛んに研究されている．GNNは，グラフのノードとエッジに対して状態ベクトル(多次元潜在変数)を考え，非線形変換を施す．ノード毎に隣接するノードやエッジ間の情報や関係性の集約や更新を繰り返し，最終的に全ノードの状態ベクトルを集約したものをそのグラフの特徴ベクトルとする\cite{MPNNs}．
+Duvenaudらは，グラフの各ノードに状態ベクトルを付与しグラフ畳み込み演算を適用する手法を提案し，化合物データを用いた実験により手法の有効性を示した\cite{NNFP}．この研究では，化合物の原子をノードとみたて，その初期状態ベクトルとして各原子の化学情報を用いた入力表現が用いられている．しかし，この入力表現として様々な他の選択肢も考えられ，どのように化学的なドメイン知識をエンコードするかは予測精度を左右すると考えられる．
+
+本研究では，\cite{NNFP}で提案されたモデル Neural Fingerprint (NFP)に基づき，複数の入力表現から適応的に選択するよう拡張したモデルを提案する．ノードの初期状態ベクトルとして，具体的にどのような入力表現が適しているかは，対象とするタスクやデータの性質によって異なり，背景知識が無ければ選択することが難しい．そこで，化学情報を用いた入力表現を複数用意し，予測に適切な表現をグラフごとに動的に選択するSoft Attention層を導入したモデルを提案する．さらに，\cite{NNFP}で実験に用いられた３種類のデータで，提案手法と既存手法の予測精度を比較する実験を行う．
+
+%\section{関連研究（○）}
+%グラフデータから特徴抽出を行う方法は様々な研究がされている.
+%その中でも，グラフデータから分子フィンガープリントを抽出する方法がある.
+%%%他の研究の引用入れる
+%%\cite{MPNNs}では，などの研究はMessage Passing Neural Networks (MPNNs) というフレームワークで全て説明できることを提唱している.
+%%%Duvenaudでもエッジの特徴の説明はあんましてないから外した方がいい？
+%%MPNNsでは，グラフ$G$のノードとエッジにそれぞれ，ノード特徴$x_v$，エッジ特徴$e_{vw}$を有する無向グラフを操作する.
+%%付与された$x_v, e_{vw}$を各ノードとエッジの初期状態ベクトル$r_v$とし，学習ステップを重ねていくことで，それぞれの隠れ状態を更新していく.
+%%更新する操作は，（引用する論文）で様々な方法が提案されているが，本研究ではDuvenaud\cite{NNFP}らの方法に着目した.
+%分子フィンガープリントは，分子構造の特徴を表現する方法で，分子類似度を計算するために使われる.
+%フィンガープリントは既存のソフトウェアで計算することができ，計算された固定サイズのフィンガープリントを全結合のDeep Neural Networkまたは他の機械学習方法への入力として使用する研究がされてきた.(28,3,19の引用)
+%分子フィンガープリントの技術には，extended-connectivity circular fingerprints (ECFP)\cite{ecfp}があり，
+%Duvenaud\cite{NNFP}の手法では，グラフ$G$に畳み込み演算を適用することで，任意のサイズのグラフからニューラルグラフフィンガープリントを生成する手法の有効性を示している.
+%このニューラルグラフフィンガープリントを生成する際，最初に，グラフ$G$のノード$v$にその原子の性質を表す情報をラベルとして特徴表現$x_v$を付与する.
+%Duvenaud\cite{NNFP}らの実験ではノードに付与する特徴表現には表\ref{tab:ecfp}の化学情報を用いているが，ノードに付与する化学情報の種類には表\ref{tab:fcfp}のような異なる表現も考えられる.
+%%ニューラルグラフフィンガープリントのパラメータは，レイヤー間の関係を表現する重み行列と
+%%ある時点$t$での，ノード$v$の状態ベクトル$r_v^t$に隣接ノードの状態ベクトルを集約し，近傍のノードとの関係を表すパラメータ$H_v$をかけて，活性化関数$\sigma$に通し，更新後の状態ベクトル$r_v^{t+1}$とすることで，畳み込み演算を適用している.
+%%\begin{eqnarray}
+%%	\mbox{\boldmath$w$} & = & r_v + \sum_{a \in Neighber(v)} r_a^t \nonumber \\
+%%	r_v^{t+1} & = & \sigma(\mbox{\boldmath$w$}H_v) \nonumber
+%%\end{eqnarray}
+%%この更新をいくつか繰り返した後，全てのノードの状態ベクトルを集約する.
+%%集約したベクトル$f$を$G$の特徴ベクトルとして，識別器に入力する.
+%%G -> f(G) -> f -> fully connected -> y みたいな図入れる？
+%
+
+
+
+
+\vspace{-10pt}
+\section{提案手法}
+%グラフと数値ベクトルに変換する層にDuvenaud法
+\subsection{概要}
+%分子グラフの頂点特徴として二つ使ったことを書く。
+\cite{NNFP}の実験では用いられた入力表現の種類が1つであった．あらかじめ用いる入力表現を決めてしまうと，汎用性にかけてしまうことが考えられる．
+また， データセットによって適した入力を選ぶにはそのデータセットに対する背景知識が必要になってくる．
+
+そこで本研究では，各々のグラフやタスクごとの背景知識を必要とせず，モデルがグラフごとに各々の入力表現の着目すべき度合いを動的に学習する手法を提案する．
+具体的には，入力表現ごとの注目度係数$\alpha$を計算するSoft Attention層を追加する．この計算層は注目度係数$\alpha$を計算するニューラルネットワークであり，出力$\alpha$は入力されたグラフに応じて各入力表現がどのくらい重要であるかを表現する．このような入力に応じた適応的重み学習の導入は，ニューラルネットワークの構造設計において，様々な事例で有効性が示されているデザインパターンである．
+
+%最終的な，固定長ベクトルは入力表現ごとの固定長ベクトルを注目度係数$\alpha$で加重平均したものをそのデータの固定長ベクトル$\vec{f}$とする．
+\vspace{-6pt}
+\subsection{Soft Attention層の導入と学習}
+%input の説明
+%変数などの説明
+%関数などの説明
+$i$番目の入力表現$R_i$を用いてNFPで計算されたグラフ$G$の固定長ベクトルを$\bm{f}_i(G) \in \mathbb{R}^F$とする．
+$F$は$\bm{f}_i(G)$の次元を表し，モデルのハイパーパラメータの一つである．
+Soft Attention層への入力は固定長ベクトルの集合 $ \{\bm{f}_1(G),\bm{f}_2(G),\dots,\bm{f}_K(G)\}$ である($K$は入力表現の種類数)．
+Soft Attention層では，各$\bm{f}_i(G)$に対して，独立したニューラルネットワーク ($NN_i:$ $\mathbb{R}^F \to \mathbb{R}^F$)を用意し，式\eqref{eq:NN}で$e_i$を計算する．
+%計算された$\mbox{\boldmath$\alpha$} = \{\alpha_1,\alpha_2,...,\alpha_k\}$
+計算された$K$個の$e_i$からなる$\bm{e}=(e_1, e_2,\dots,e_K)'$をsoftmax関数に通し，式\eqref{eq:softmax}で正規化された値$\alpha_i$を得る．これを固定長ベクトル$\bm{f}_i$または入力表現$R_i$の注目度係数とする．
+最後に，Soft Attention層の出力として，各$\bm{f}_i(G)$が注目度係数$\alpha_i$で加重平均された固定長ベクトルに式\eqref{eq:congate}で非線形変換$\sigma$を施したものが$\bm{f} \in \mathbb{R}^F$として計算され，これをグラフ$G$の固定次元の多変量ベクトルへの埋め込み表現として用いる．モデル式は下記となる．
+\begin{eqnarray}
+	\label{eq:NN}
+	e_i &=& NN_i(\bm{f}_i(G)) \\
+	\label{eq:softmax}
+	\alpha_i &=& \textstyle\mathrm{softmax}(\bm{e})_i = {\exp(e_i)}/{\sum_{j=1}^{K}\exp(e_j)} \\
+	\label{eq:congate}
+	\bm{f}&=& \textstyle\sigma(\sum_{i = 1}^{K} \alpha_i \bm{f}_i(G))
+\end{eqnarray}
+この注目度係数を学習することで，データにとって重要な入力表現を動的に選択することができる．学習は，通常のNFPと同じく全体が自動微分可能な計算グラフとなることから，同様にBack Propagationで計算できる．
+
+\vspace{-10pt}
+\section{実験}
+提案手法の有効性を検証するために，既存手法との比較実験を行った．
+実験では、提案手法の予測性能により，Soft Attention層の導入の有効性を検証する．
+
+\vspace{-6pt}
+\subsection{使用するデータ}
+今回使用したデータセットは，\cite{NNFP}内で使われたものと同様の3 つのデータセットを用いた．
+\begin{itemize}
+\setlength{\itemsep}{0pt}
+\item Dataset~1: $1,144$個の化合物の溶解度$[\log{\mathrm{Mol}/L}]$のデータセット\cite{delaney}
+\item Dataset~2: 熱帯熱マラリア原虫\(P.falciparum\)の硫化物耐性に対する$10,000$個の試験管内での半数効果濃度$EC_{50}$[nM]のデータセット\cite{malaria}
+\item Dataset~3: $29,978$個の有機分子の光起電力効率[\%]の密度汎関数法による計算値データセット\cite{cep}
+\end{itemize}
+
+\vspace{-6pt}
+\subsection{実験設定}
+ここでは，ノードに与える入力表現を2種類準備し，原子の物理的性質を表す入力表現1 (表\ref{tab:ecfp}),化学的性質を表す入力表現2 (表\ref{tab:fcfp})を用いた．
+入力表現1は，\cite{NNFP}の実験でも用いられていた表現であり，入力表現2は化学的機能に着目した特徴を表す代表的な表現である．それぞれの入力表現に含まれる特徴をone-hot またはbinary表現で表し，連結したものをノードに付与する入力表現とした．
+各特徴量の説明，サイズを表\ref{tab:ecfp}，表\ref{tab:fcfp}に示した．
+今回は，この2つの入力表現からデータによって適応的に選択する実験を行った．
+初めに，2つの入力表現をそれぞれ単独で用いたNFPを訓練し，予測精度を求める．
+次に，提案手法でモデルを訓練し，予測精度を求め，精度を比較し，提案手法の有効性を確認する．
+しかし，両者には入力する情報量の差があるため，公平ではない．
+そこで，入力表現1,2をさらに連結したものを用いてNFPを訓練し，同時に比較し，入力表現を重み付けして選択できているかを確認する．
+全てのモデルについて，エッジに付与する初期状態ベクトルの表現は統一し，各特徴量の説明，サイズは表\ref{tab:bond}に示した．
+各モデルは，表\ref{tab:data}の通りにデータをtraining, validation, test用に分割し，testデータの二乗平均平方根誤差(RMSE)を比較した．
+エポック数は1000回，バッチサイズは128，その他のNFPに関わるハイパーパラメータ，最適化関数は\cite{NNFP}の実験と同等である．
+Soft Attention層内の$NN_i$は全て入力層と出力層を含めて 4 層の多層ニューラルネットワークにし，ノード数は入力層から50,100,50,50とした．
+つまり，固定長ベクトルの長さ$F$は50となる．
+
+\begin{table}[htb]
+  \footnotesize
+  \begin{tabular}{lll} \hline
+  	Feature & Description & Size \\  \hline \hline 
+	原子番号& 48種類の元素とそれ以外の元素（one-hot）& 49 \\ 
+	次数    & 結合している原子の個数（one-hot） & 6 \\ 
+	総水素数& 結合している水素の個数（one-hot） & 5 \\ 
+	価電子  & 価電子の個数（one-hot） & 6 \\ 
+	ベンゼン環 & ベンゼン環の有無（binary） & 1  \\\hline
+	合計 & & 67 \\ \hline
+  \end{tabular}
+  \vspace{-2ex}
+  \caption{原子の物理的性質を表す入力表現1}
+  \vspace{1em}
+  \label{tab:ecfp}\par
+  \begin{tabular}{lll} \hline
+  	Feature & Description & Size \\  \hline \hline 
+	ドナー & ドナーであるか（binary） & 1 \\ 
+	アクセプター & あくセプターであるか（binary） & 1 \\ 
+	芳香族 & 芳香族であるか（binary） & 1 \\ 
+	ハロゲン & ハロゲンであるか（binary） & 1 \\ 
+	酸性 & 酸性であるか（binary） & 1 \\ 
+	塩基性 & 塩基性であるか（binary） & 1 \\ \hline
+	合計 & & 6 \\ \hline
+  \end{tabular}
+    \vspace{-2ex}
+  \caption{原子の化学的性質を表す入力表現2}
+    \vspace{1em}
+  \label{tab:fcfp}
+  \begin{tabular}{lll} \hline
+  	Feature & Description & Size \\  \hline \hline 
+	 結合の種類 & 単結合，二重，三重，ベンゼン環（one-hot） & 4 \\ 
+	 共役系 & 共役系であるか（binary） & 1 \\ 
+	 環状 &  環状構造の一部であるか（binary） & 1 \\ \hline
+	合計 & & 6 \\ \hline
+  \end{tabular}
+      \vspace{-2ex}
+  \caption{原子間の結合の特徴}
+      \vspace{1em}
+  \label{tab:bond}
+  \begin{tabular}{llll} \hline
+	& Dataset 1  & Dataset 2 & Dataset 3 \\ \hline \hline
+	size & 1144 & 10000 & 29978 \\ 
+	training & 700 & 7000 & 20000 \\ 
+	validation & 200 & 1900 & 6000 \\ 
+	test & 100 & 1000 & 3000 \\ \hline
+  \end{tabular}
+        \vspace{-2ex}
+  \caption{各データの分割数}
+  \label{tab:data}
+\end{table}
+
+\vspace{-10pt}
+\section{結果と考察}
+\begin{table}[htb]
+\scriptsize
+  \begin{tabular}{lllll}\hline
+  			 				   &  Dataset 1 \cite{delaney} & Dataset 2 \cite{malaria} & Dataset 3 \cite{cep}    \\  
+	単位	    			   &     $[\log{\mathrm{Mol}/L}]$    &     $[EC_{50}]$ in nM & \%                   \\ \hline \hline
+	 平均\cite{NNFP}	       &     4.29 $\pm$ 0.40    &     1.47 $\pm$ 0.07   &     6.40 $\pm$ 0.09  \\ \hline 
+	NFP+入力表現 1 			   &     1.09 $\pm$ 0.04    &     1.10 $\pm$ 0.03   &     1.89 $\pm$ 0.00  \\ 
+	NFP+入力表現 2 			   &     1.26 $\pm$ 0.05    &     1.12 $\pm$ 0.02   &     2.89 $\pm$ 0.02  \\ 
+	NFP+入力表現 1,2	 	   &     1.14 $\pm$ 0.04    & \bf{1.09 $\pm$ 0.02}  &     1.87 $\pm$ 0.04  \\ 
+	提案法+入力表現 1,2 & \bf{1.00 $\pm$ 0.13}   & \bf{1.09 $\pm$ 0.00}  & \bf{1.68 $\pm$ 0.02} \\ \hline
+  \end{tabular}
+        \vspace{-2ex}
+  \caption{各モデルの予測精度（RMSE）の比較}
+  \label{tab:rmse}
+\end{table}
+
+表\ref{tab:rmse}に全ての実験結果を示す．最もRMSEの低かったものは太字で表した．全てのデータに対して，提案手法が最も良い結果となった．
+単独の入力表現を用いて既存手法を訓練した実験よりも，提案手法の実験の方がRMSEが低く，精度を上げることができたので，Soft Attention層導入がの有効であったと考えられる．
+さらに，情報量の差をなくした2つの表現を連結した実験と比べても，提案手法の結果が優れているため，与える単純なドメイン知識の量以上の改善と考えられる．
+
+\vspace{-10pt}
+\section{おわりに}
+本研究では，入力されるデータの性質を予測するのに適した入力表現を動的に選択するSoft Attention層の導入をした拡張モデルを提案した．既存のモデルとの予測精度の比較実験において，提案手法の予測精度が上回り，各グラフに対して動的に入力表現を選択するSoft Attention層の導入の有効性が確認できた．
+一方，定量的には有効性が示されたが，各化合物について具体的にどちらの入力表現がどれくらい重要であるか，ということは未解析である．注目度係数の可視化は，予測モデルの学習結果の解釈性の理解を手助ける重要な研究であるため，他の入力表現を選択肢で増やす検討とともに，今後の課題としたい．
+
+\vspace{-10pt}
+\section*{謝辞}
+本研究は JSPS 科研費 17H01783，15H05711, 17K19953およびJSTさきがけの助成を受けたものである．
+
+\begin{spacing}{0.1}
+\footnotesize
+\begin{thebibliography}{}
+
+\bibitem{delaney}Delaney,~J.~S.: ESOL: Estimating Aqueous Solubility Directly
+  from Molecular Structure, {\em J. Chem. Inform. Comput. Sci.}, 44(3), 1000--1005 (2004)
+
+\bibitem{NNFP}Duvenaud,~D.~K., Maclaurin,~D., Aguilera{-}Iparraguirre,~J.,
+  G{\'{o}}mez{-}Bombarelli,~R., Hirzel,~T., Aspuru{-}Guzik,~A., and
+  Adams,~R.~P.: Convolutional Networks on Graphs for Learning Molecular
+  Fingerprints, in {\em Adv. Neural. Inf. Process. Syst (NIPS2015)}. 28, 2224--2232 (2015)
+
+\bibitem{malaria}Gamo,~F.-J., Sanz,~L.~M., Vidal,~J., Cozar,~de~C.,
+  Alvarez,~E., Lavandera,~J.-L., Vanderwall,~D.~E., Green,~D.~V., Kumar,~V.,
+  Hasan,~S., et~al.: Thousands of chemical starting points for antimalarial
+  lead identification, {\em Nature}, 465(7296), 305 (2010)
+
+\bibitem{MPNNs}Gilmer,~J., Schoenholz,~S.~S., Riley,~P.~F., Vinyals,~O., and
+  Dahl,~G.~E.: Neural Message Passing for Quantum Chemistry, in {\em
+  Proceedings of the 34th International Conference on Machine Learning ({ICML}2017)}, 1263--1272 (2017)
+
+\bibitem{cep}Hachmann,~J., Olivares-Amaya,~R., Atahan-Evrenk,~S.,
+  Amador-Bedolla,~C., S{\'a}nchez-Carrera,~R.~S., Gold-Parker,~A., Vogt,~L.,
+  Brockway,~A.~M., and Aspuru-Guzik,~A.: The Harvard clean energy project:
+  large-scale computational screening and design of organic photovoltaics on
+  the world community grid, {\em J. Phys. Chem. Lett.},
+  2(17), 2241--2251 (2011)
+
+\end{thebibliography}
+
+\end{spacing} 
+%%
+
+
+\end{document}
